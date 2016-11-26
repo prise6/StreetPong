@@ -3,33 +3,110 @@
 server = function(input, output, session) {
   
   datas = reactiveValues(
-    matchs = matchs,
-    scores = scores
+    matchs   = matchs,
+    scores   = scores,
+    tournois = tournois
   )
+  
+  ## data getters 
+  
+  getMatchs = reactive({
+    datas$matchs[id_tournois %in% selectTournoi() & as.integer(format(date, "%V")) %in% selectSemaines()]
+  })
+  
+  getScores = reactive({
+    datas$scores
+  })
+  
+  getTournois = reactive({
+    datas$tournois
+  })
+  
+  getJoueurs = reactive({
+    joueurs
+  })
+  
+  getMergeDatas = reactive({
+    dt = merge(getMatchs(), getScores(), by = "id_match")
+    dt = merge(getJoueurs(), dt, by = "id_joueur")
+    dt
+  })
+  
+  getClassement = reactive({
+    getMergeDatas()[, list(
+      `Points`             = nombrePoints(victoire, nbr_sets),
+      `Nombre de victoire` = sum(victoire),
+      `Nombre de defaite`  = sum(1-victoire),
+      `Nombre de matchs`   = length(victoire)
+    ), by = pseudo][order(-Points)]
+  })
+  
+  ## Filtres
+  
+  selectTournoi = reactive({
+    if(input$selectTournoi == 1)
+      getTournois()[, unique(id_tournoi)]
+    else
+      input$selectTournoi
+  })
+  
+  selectSemaines = reactive({
+    input$selectSemaines
+  })
   
   ## Scores
   
   output$IBnbrMatchs = renderInfoBox({
-    nbr = datas$matchs[, uniqueN(id)]
+    nbr = getMatchs()[, uniqueN(id_match)]
     
     infoBox(
       title = "Match joués",
       value = nbr,
+      icon  = shiny::icon("bar-chart"),
       color = "green"
     )
   })
   
-  output$dt.classement = DT::renderDataTable({
-    print(datas$scores)
+  output$IBnbrJoueurs = renderInfoBox({
+    nbr = getMergeDatas()[, uniqueN(id_joueur)]
     
-    dt = merge(joueurs, datas$scores, by.x = "id", by.y = "id_joueur")
-    # dt = data.table:::merge.data.table(joueurs, scores, by.x = "id", by.y = "id_joueur")
+    infoBox(
+      title = "Joueurs",
+      value = nbr,
+      icon  = shiny::icon("users"),
+      color = "red"
+    )
+  })
+  
+  
+  output$IBjoueursPremier = renderInfoBox({
+    
+    pseudo = getClassement()[1, pseudo]
+    
+    infoBox(
+      title = "Leader",
+      value = pseudo,
+      icon  = shiny::icon("child"),
+      color = "blue"
+    )
+    
+  })
+  
+  output$dt.classement = DT::renderDataTable({
+    datatable(getClassement(), rownames = F, filter = "none", extensions = "Responsive")
+  })
+  
+  output$dt.matchs = DT::renderDataTable({
+    # dt = merge(getMatchs(), getJoueurs(), by.x = "id_joueur", by.y = "id")
+    dt = getMergeDatas()
     datatable(dt[, list(
-      `Nombre de victoire` = sum(victoire),
-      `Nombre de defaite`  = sum(1-victoire),
-      `Nombre de matchs`   = length(victoire),
-      `Points`             = nombrePoints(victoire, nbr_sets)
-    ), by = pseudo][order(-Points)])
+      joueur1     = pseudo[1],
+      score1      = nbr_sets[1],
+      score2      = nbr_sets[2],
+      joueur2     = pseudo[2],
+      date        = date[1],
+      commentaire = commentaire[1]
+    ), by = "id_match"][order(-date)][, id_match := NULL], rownames = F, filter = "none", extensions = "Responsive")
   })
   
   ## Nouveau Match
@@ -50,6 +127,14 @@ server = function(input, output, session) {
     as.integer(input$selectMatchJoueur2NbrSet)
   })
   
+  selectionMatchTournois = reactive({
+    tournoi = as.integer(input$selectMatchTournois)
+    if(tournoi %in% getTournois()$id_tournoi & tournoi > 1)
+      tournoi
+    else 
+      NULL
+  })
+  
   selectionMatchCommentaires = reactive({
     input$textMatchCommentaires
   })
@@ -64,6 +149,7 @@ server = function(input, output, session) {
       selectionMatchJoueur2(),
       selectionMatchJoueur1NbrSet(),
       selectionMatchJoueur2NbrSet(),
+      selectionMatchTournois(),
       selectionMatchDate()
     ))){
       
@@ -72,12 +158,13 @@ server = function(input, output, session) {
       print(head(datas$matchs))
       
       res = ajouterMatch(
-        datas$matchs,
+        getMatchs(),
         selectionMatchDate(),
-        selectionMatchCommentaires()
+        selectionMatchCommentaires(),
+        selectionMatchTournois()
       )
       
-      scores  = ajouterScore(datas$scores, selectionMatchJoueur1(), res$nv_id, selectionMatchJoueur1NbrSet() == 2, selectionMatchJoueur1NbrSet())
+      scores  = ajouterScore(getScores(), selectionMatchJoueur1(), res$nv_id, selectionMatchJoueur1NbrSet() == 2, selectionMatchJoueur1NbrSet())
       scores  = ajouterScore(scores, selectionMatchJoueur2(), res$nv_id, selectionMatchJoueur2NbrSet() == 2, selectionMatchJoueur2NbrSet())
       
       datas$matchs = res$matchs
