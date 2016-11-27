@@ -3,9 +3,9 @@
 server = function(input, output, session) {
   
   datas = reactiveValues(
-    matchs   = matchs,
-    scores   = scores,
-    tournois = tournois
+    matchs   = myReadRDS("matchs.RDS", varglobal, PROD, LOCAL),
+    scores   = myReadRDS("scores.RDS", varglobal, PROD, LOCAL),
+    tournois = myReadRDS("tournois.RDS", varglobal, PROD, LOCAL)
   )
   
   ## data getters 

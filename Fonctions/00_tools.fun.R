@@ -11,3 +11,15 @@ mySaveRDS = function(datas, file, varglobal, PROD, LOCAL) {
     }
   }
 }
+
+myReadRDS = function(file, varglobal, PROD, LOCAL) {
+  if(isTRUE(PROD)){
+    s3readRDS("moulinsart", file)
+  } else {
+    if(isTRUE(LOCAL)) {
+      readRDS(file.path(varglobal$chemins$datas, file))
+    } else {
+      s3readRDS("moulinsart", paste("dev", file, sep = "_"))
+    }
+  }
+}

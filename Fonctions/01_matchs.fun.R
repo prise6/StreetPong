@@ -2,12 +2,6 @@
 
 validerMatch = function(joueur1, joueur2, nbrSet1, nbrSet2, tournoi, date) {
   
-  print(joueur1)
-  print(joueur2)
-  print(nbrSet1)
-  print(nbrSet2)
-  print(date)
-  
   if(is.null(tournoi))
     return(FALSE)
   
