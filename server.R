@@ -170,8 +170,8 @@ server = function(input, output, session) {
       datas$matchs = res$matchs
       datas$scores = scores
       
-      saveRDS(datas$matchs, file.path(varglobal$chemins$datas, "matchs.RDS"))
-      saveRDS(datas$scores, file.path(varglobal$chemins$datas, "scores.RDS"))
+      mySaveRDS(datas$matchs, "matchs.RDS", varglobal, PROD, LOCAL)
+      mySaveRDS(datas$scores, "scores.RDS", varglobal, PROD, LOCAL)
       
       return(TRUE)
     }

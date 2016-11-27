@@ -1,4 +1,6 @@
 
+PROD  = TRUE
+LOCAL = FALSE
 
 varglobal = list()
 views     = list()
