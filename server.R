@@ -2,11 +2,31 @@
 
 server = function(input, output, session) {
   
+  ## Reactive values
+  
   datas = reactiveValues(
     matchs   = myReadRDS("matchs.RDS", varglobal, PROD, LOCAL),
     scores   = myReadRDS("scores.RDS", varglobal, PROD, LOCAL),
     tournois = myReadRDS("tournois.RDS", varglobal, PROD, LOCAL)
   )
+  
+  varsession = reactiveValues(
+    semaines = seq(47, as.integer(format(Sys.Date(), "%V")), by = 1)
+  )
+  
+  ## sidebar
+  
+  output$sliderSemaines = renderUI({
+    sliderInput(
+      inputId = "selectSemaines",
+      label   = varglobal$labels$filtresSemaines,
+      min     = min(varsession$semaines),
+      max     = max(varsession$semaines),
+      value   = c(min(varsession$semaines), max(varsession$semaines)),
+      step    = 1,
+      ticks   =  F
+    )
+  })
   
   ## data getters 
   
@@ -140,7 +160,7 @@ server = function(input, output, session) {
   })
   
   selectionMatchDate = reactive({
-    as.Date(input$dateMatchDate, format = "%Y-%m-%d")
+    as.Date(input$dateMatchDate, format = "%Y-%m-%d", tz = "Europe/Paris")
   })
   
   validationFormMatch = eventReactive(input$btnAjouterMatch, {

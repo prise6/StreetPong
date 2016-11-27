@@ -38,7 +38,7 @@ views$tabItems$nvMatch = tagList(
               ),
               
               div(
-                class = "col-md-2 col-sm-12 col-xs-12",
+                class = "col-md-2 col-sm-12 col-xs-12 hidden-sm hidden-xs",
                 div(
                   class = "text-center",
                   br(),
