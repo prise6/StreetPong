@@ -5,7 +5,7 @@ server = function(input, output, session) {
   ## Reactive values
   
   datas = reactiveValues(
-    matchs   = unique(myReadRDS("matchs.RDS", varglobal, PROD, LOCAL), by = "id_match"),
+    matchs   = unique(myReadRDS("matchs.RDS", varglobal, PROD, LOCAL), by = NULL),
     scores   = unique(myReadRDS("scores.RDS", varglobal, PROD, LOCAL), by = NULL),
     tournois = myReadRDS("tournois.RDS", varglobal, PROD, LOCAL)
   )
@@ -31,6 +31,10 @@ server = function(input, output, session) {
   ## data getters 
   
   getMatchs = reactive({
+    datas$matchs
+  })
+  
+  getMatchsFiltre = reactive({
     datas$matchs[id_tournoi %in% selectTournoi() & as.integer(format(date, "%V")) %in% selectSemaines()]
   })
   
@@ -47,18 +51,22 @@ server = function(input, output, session) {
   })
   
   getMergeDatas = reactive({
-    dt = merge(getMatchs(), getScores(), by = "id_match")
+    dt = merge(getMatchsFiltre(), getScores(), by = "id_match")
     dt = merge(getJoueurs(), dt, by = "id_joueur")
     dt
   })
   
   getClassement = reactive({
-    getMergeDatas()[, list(
-      `Pts` = nombrePoints(victoire, nbr_sets),
+    dt = getMergeDatas()
+    
+    dt[, penality := computePenalities(victoire, nbr_sets), by = list(id_match)]
+    
+    dt[, list(
+      `Pts` = nombrePoints(victoire, nbr_sets, penality),
       `V`   = sum(victoire),
       `D`   = sum(1-victoire),
       `M`   = length(victoire)
-    ), by = pseudo][order(-Pts)]
+    ), by = pseudo][order(-Pts, -V, D, -M)]
   })
   
   ## Filtres
@@ -77,7 +85,7 @@ server = function(input, output, session) {
   ## Scores
   
   output$IBnbrMatchs = renderInfoBox({
-    nbr = getMatchs()[, uniqueN(id_match)]
+    nbr = getMatchsFiltre()[, uniqueN(id_match)]
     
     infoBox(
       title = "Match joués",
@@ -126,7 +134,7 @@ server = function(input, output, session) {
       date        = date[1],
       commentaire = commentaire[1],
       tournoi     = nom_tournoi[1]
-    ), by = "id_match"][order(-date)][, id_match := NULL],
+    ), by = "id_match"][order(-date, -id_match)][, id_match := NULL],
     rownames   = F,
     filter     = "none",
     extensions = "Responsive",
@@ -193,8 +201,12 @@ server = function(input, output, session) {
       scores  = ajouterScore(getScores(), selectionMatchJoueur1(), res$nv_id, selectionMatchJoueur1NbrSet() == 2, selectionMatchJoueur1NbrSet())
       scores  = ajouterScore(scores, selectionMatchJoueur2(), res$nv_id, selectionMatchJoueur2NbrSet() == 2, selectionMatchJoueur2NbrSet())
       
+      print(res$matchs)
+      
       datas$matchs = res$matchs
       datas$scores = scores
+      
+      print(datas$matchs)
       
       mySaveRDS(datas$matchs, "matchs.RDS", varglobal, PROD, LOCAL)
       mySaveRDS(datas$scores, "scores.RDS", varglobal, PROD, LOCAL)

@@ -1,5 +1,5 @@
 
-PROD  = TRUE
+PROD  = FALSE
 LOCAL = FALSE
 
 Sys.setenv('TZ' = "Europe/Paris")

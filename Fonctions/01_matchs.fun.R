@@ -52,10 +52,23 @@ ajouterScore = function(scores, id_joueur, id_match, victoire, nbr_sets) {
   return(scores)
 }
 
-nombrePoints = function(victoires, nbr_sets){
+nombrePoints = function(victoires, nbr_sets, penality){
   nbr_sets = ifelse(nbr_sets == 0, 2, nbr_sets)
-  return(sum((victoires*2-1)*nbr_sets))
+  return(sum((victoires*2-1)*nbr_sets + penality))
 }
 
+
+computePenalities = function(victoires, nbr_sets){
+  res = numeric(2L)
+  if(isTRUE(victoires[1])) {
+    if(nbr_sets[2] == 1)
+      res[1] = -1
+  } else if (isTRUE(victoires[2])) {
+    if(nbr_sets[1] == 1)
+      res[2] = -1
+  }
+  
+  return(res)
+}
 
 
