@@ -5,8 +5,8 @@ server = function(input, output, session) {
   ## Reactive values
   
   datas = reactiveValues(
-    matchs   = myReadRDS("matchs.RDS", varglobal, PROD, LOCAL),
-    scores   = myReadRDS("scores.RDS", varglobal, PROD, LOCAL),
+    matchs   = unique(myReadRDS("matchs.RDS", varglobal, PROD, LOCAL), by = "id_match"),
+    scores   = unique(myReadRDS("scores.RDS", varglobal, PROD, LOCAL), by = NULL),
     tournois = myReadRDS("tournois.RDS", varglobal, PROD, LOCAL)
   )
   
@@ -31,7 +31,7 @@ server = function(input, output, session) {
   ## data getters 
   
   getMatchs = reactive({
-    datas$matchs[id_tournois %in% selectTournoi() & as.integer(format(date, "%V")) %in% selectSemaines()]
+    datas$matchs[id_tournoi %in% selectTournoi() & as.integer(format(date, "%V")) %in% selectSemaines()]
   })
   
   getScores = reactive({
@@ -54,11 +54,11 @@ server = function(input, output, session) {
   
   getClassement = reactive({
     getMergeDatas()[, list(
-      `Points`             = nombrePoints(victoire, nbr_sets),
-      `Nombre de victoire` = sum(victoire),
-      `Nombre de defaite`  = sum(1-victoire),
-      `Nombre de matchs`   = length(victoire)
-    ), by = pseudo][order(-Points)]
+      `Pts` = nombrePoints(victoire, nbr_sets),
+      `V`   = sum(victoire),
+      `D`   = sum(1-victoire),
+      `M`   = length(victoire)
+    ), by = pseudo][order(-Pts)]
   })
   
   ## Filtres
@@ -117,16 +117,26 @@ server = function(input, output, session) {
   })
   
   output$dt.matchs = DT::renderDataTable({
-    # dt = merge(getMatchs(), getJoueurs(), by.x = "id_joueur", by.y = "id")
     dt = getMergeDatas()
+    dt = merge(dt, getTournois()[, list(nom_tournoi = nom, id_tournoi)], by = "id_tournoi")
     datatable(dt[, list(
-      joueur1     = pseudo[1],
-      score1      = nbr_sets[1],
-      score2      = nbr_sets[2],
-      joueur2     = pseudo[2],
+      J1          = pseudo[1],
+      score       = paste(nbr_sets[1], nbr_sets[2], sep = "-"),
+      J2          = pseudo[2],
       date        = date[1],
-      commentaire = commentaire[1]
-    ), by = "id_match"][order(-date)][, id_match := NULL], rownames = F, filter = "none", extensions = "Responsive")
+      commentaire = commentaire[1],
+      tournoi     = nom_tournoi[1]
+    ), by = "id_match"][order(-date)][, id_match := NULL],
+    rownames   = F,
+    filter     = "none",
+    extensions = "Responsive",
+    options = list(
+      columnDefs = list(
+        list(className = "dt-center", targets = 1),
+        list(className = "dt-right", targets = 0),
+        list(className = "dt-left", targets = 2)
+      )
+    ))
   })
   
   ## Nouveau Match
@@ -172,10 +182,6 @@ server = function(input, output, session) {
       selectionMatchTournois(),
       selectionMatchDate()
     ))){
-      
-      print("Valide matchs")
-      
-      print(head(datas$matchs))
       
       res = ajouterMatch(
         getMatchs(),
