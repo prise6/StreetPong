@@ -35,7 +35,7 @@ server = function(input, output, session) {
   })
   
   getMatchsFiltre = reactive({
-    datas$matchs[id_tournoi %in% selectTournoi() & as.integer(format(date, "%V")) %in% selectSemaines()]
+    datas$matchs[id_tournoi %in% selectTournoi() & as.integer(format(date, "%V")) %between% selectSemaines()]
   })
   
   getScores = reactive({

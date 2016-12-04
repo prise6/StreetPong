@@ -7,7 +7,8 @@ views$dashboardSidebar = dashboardSidebar(
     selectInput(
       inputId = "selectTournoi",
       label = varglobal$labels$filtresTournois,
-      choices = varglobal$choices$tournois
+      choices = varglobal$choices$tournois,
+      selected = 3
     ),
     
     uiOutput("sliderSemaines"),
