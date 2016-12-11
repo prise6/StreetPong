@@ -66,7 +66,7 @@ server = function(input, output, session) {
       `V`   = sum(victoire),
       `D`   = sum(1-victoire),
       `M`   = length(victoire)
-    ), by = pseudo][order(-Pts, -V, D, -M)]
+    ), by = pseudo][order(-Pts, M, -V, D)]
   })
   
   ## Filtres
