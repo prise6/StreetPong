@@ -11,7 +11,10 @@ server = function(input, output, session) {
   )
   
   varsession = reactiveValues(
-    semaines = seq(47, as.integer(format(Sys.Date(), "%V")), by = 1)
+    semaines = c(
+      paste("2016", seq(as.integer(format(date_debut, "%V")), 52, by = 1), sep = " S"),
+      paste("2017", sprintf("%02d", seq(1, as.integer(format(Sys.Date(), "%V")), by = 1)), sep = " S")
+    )
   )
   
   ## sidebar
@@ -20,13 +23,14 @@ server = function(input, output, session) {
     sliderInput(
       inputId = "selectSemaines",
       label   = varglobal$labels$filtresSemaines,
-      min     = min(varsession$semaines),
-      max     = max(varsession$semaines),
-      value   = c(min(varsession$semaines), max(varsession$semaines)),
+      min     = 1,
+      max     = length(varsession$semaines),
+      value   = c(1, length(varsession$semaines)),
       step    = 1,
-      ticks   =  F
+      ticks   = F
     )
   })
+  
   
   ## data getters 
   
@@ -35,7 +39,10 @@ server = function(input, output, session) {
   })
   
   getMatchsFiltre = reactive({
-    datas$matchs[id_tournoi %in% selectTournoi() & as.integer(format(date, "%V")) %between% selectSemaines()]
+    print(selectSemaines())
+    print(varsession$semaines[selectSemaines()[1]:selectSemaines()[2]])
+    print(tail(datas$matchs))
+    datas$matchs[id_tournoi %in% selectTournoi() & format(date, "%Y S%V") %chin% varsession$semaines[selectSemaines()[1]:selectSemaines()[2]]]
   })
   
   getScores = reactive({
